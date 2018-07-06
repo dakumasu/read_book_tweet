@@ -1,7 +1,6 @@
 #!python2
 # -*- coding: utf-8 -*-
-import urllib
-import urllib2
+import requests
 from bs4 import BeautifulSoup
 import re
 import tweepy
@@ -16,15 +15,13 @@ def setup():
     auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
     return auth
 
-
 def search(word):
     t = 0
-    list = []
-    word = urllib.quote_plus(word.encode('utf-8')) 
+    list = [] 
     ty = 'search-alias%3Ddigital-text'
     target = 'https://www.amazon.co.jp/s/?keywords={}&url={}'.format(word, ty)
-    url = urllib2.urlopen(target)
-    soup = BeautifulSoup(url)
+    url = requests.get(target)
+    soup = BeautifulSoup(url.text, "lxml")
     h = ('a-link-normal '
          's-access-detail-page s-'
          'color-twister-title-link a-text-normal')
@@ -33,7 +30,7 @@ def search(word):
         element = str(element)
         title = str(re.findall('title="(.*)"><h2 class', element)[0])
         link = str(re.findall('href="(.*)" target', element)[0])
-        print 'No.{} {}'.format(t, title)
+        print('No.{} {}'.format(t, title))
         t += 1
         list.append(title)
         list.append(link)
@@ -43,10 +40,12 @@ def search(word):
 def tweet(list, no, api):
     sentence = 'I read this book\n{} {}'.format(list[2 * no], list[2 * no + 1])
     api.update_status(sentence)
-    print 'Tweet had already done : {}'.format(sentence)
+    print('Tweet had already done : {}'.format(sentence))
 
-search_word = raw_input('Fill in the book name>>>')
+
+
+search_word = input('Fill in the book name>>>')
 result = search(search_word)
-number = int(raw_input('Select number.\nNo>>>'))
-api = tweepy.API(setup())
+number = int(input('Select number.\nNo>>>'))
+api = setup()
 tweet(result, number, api)
